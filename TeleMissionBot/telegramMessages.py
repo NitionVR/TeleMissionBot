@@ -35,3 +35,12 @@ def create_client():
     client = TelegramClient(username,api_id,api_hash)
     return client
 
+async def authorize_client(client, phone_number):
+    if await client.is_user_authorized() == False:
+        await client.send_code_request(phone_number)
+        print("A verification code has been sent to your cellphone number.")
+        try:
+            await client.sign_in(phone_number, input("Enter the code: "))
+        except SessionPasswordNeededError:
+            await client.sign_in(password=input("Enter password: "))
+
