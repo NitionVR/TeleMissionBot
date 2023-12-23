@@ -1,6 +1,7 @@
 import configparser
 import json
 import asyncio
+import aiofiles
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -8,6 +9,13 @@ from telethon import TelegramClient, events, sync
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.messages import (GetHistoryRequest)
 from telethon.tl.types import (PeerChannel)
+
+CONFIG_SECTION = "Telegram"
+API_ID_KEY = "api_id"
+API_HASH_KEY = "api_hash"
+PHONE_NUMBER_KEY = "phone_number"
+USER_NAME_KEY = "username"
+CONFIG_FILE = "config.ini"
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
@@ -21,19 +29,19 @@ class DateTimeEncoder(json.JSONEncoder):
 
 def config_file():
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    config.read(CONFIG_FILE)
     return config
 
 
 def configure_api(config):
-    api_id = config["Telegram"]["api_id"]
-    api_hash = str(config["Telegram"]["api_hash"])
+    api_id = config[CONFIG_SECTION][API_ID_KEY]
+    api_hash = str(config[CONFIG_SECTION][API_HASH_KEY])
     return (api_id,api_hash)
 
 
 def configure_user(config):
-    phone_number = config["Telegram"]["phone_number"]
-    username = config["Telegram"]["username"]
+    phone_number = config[CONFIG_SECTION][PHONE_NUMBER_KEY]
+    username = config[CONFIG_SECTION][USER_NAME_KEY]
     return (phone_number,username)
 
 
@@ -102,6 +110,6 @@ async def get_messages(client,my_channel):
                 break
 
                                  
-def store_messages(messages,filename = "telegram_messages.json"):
-    with open(filename,"w") as outfile:
-        json.dump(messages, outfile, cls = DateTimeEncoder)
+async def store_messages(messages,filename = "telegram_messages.json"):
+    async with aiofiles.open(filename,"w") as outfile:
+        await json.dump(messages, outfile, cls = DateTimeEncoder)
