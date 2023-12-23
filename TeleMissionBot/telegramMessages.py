@@ -2,12 +2,22 @@ import configparser
 import json
 import asyncio
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from telethon import TelegramClient, events, sync
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.messages import (GetHistoryRequest)
 from telethon.tl.types import (PeerChannel)
 
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        
+        if isinstance(o,bytes):
+            return list(o)
+        
+        return json.JSONEncoder.default(self,o)
 
 def config_file():
     config = configparser.ConfigParser()
@@ -92,3 +102,6 @@ async def get_messages(client,my_channel):
                 break
 
                                  
+def store_messages(messages,filename = "telegram_messages.json"):
+    with open(filename,"w") as outfile:
+        json.dump(messages, outfile, cls = DateTimeEncoder)
