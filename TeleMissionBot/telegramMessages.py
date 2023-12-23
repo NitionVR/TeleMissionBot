@@ -35,6 +35,7 @@ def create_client():
     client = TelegramClient(username,api_id,api_hash)
     return client
 
+
 async def authorize_client(client, phone_number):
     if await client.is_user_authorized() == False:
         await client.send_code_request(phone_number)
@@ -43,4 +44,20 @@ async def authorize_client(client, phone_number):
             await client.sign_in(phone_number, input("Enter the code: "))
         except SessionPasswordNeededError:
             await client.sign_in(password=input("Enter password: "))
+
+
+def get_channel_info():
+    user_channel = input("Enter Telegram channel URL or ID: ").strip()
+
+    try:
+        if user_channel.isdigit():
+            entity = PeerChannel(int(user_channel))
+        else:
+            entity = user_channel
+    except ValueError:
+        print("Invalid input. Please enter a valid Telegram channel URL or ID")
+        return None
+    
+    return entity
+    
 
