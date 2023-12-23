@@ -13,4 +13,12 @@ from telethon.tl.types import (PeerChannel)
 config = configparser.ConfigParser()
 config.read("config.ini")
 
+#Getting and Setting Api configuration values
+api_id = config["Telegram"]["api_id"]
+api_hash = str(config["Telegram"]["api_hash"])
+
+#Getting and Setting telegram account details
+phone_number = config["Telegram"]["phone_number"]
+username = config["Telegram"]["username"]
+
 
