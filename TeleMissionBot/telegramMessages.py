@@ -79,6 +79,15 @@ def get_channel_info():
     return entity
     
 
+async def get_channel():
+    while True:
+        try:
+            entity = get_channel_info()
+            my_channel = await client.get_entity(entity)
+            return my_channel
+        except ValueError:
+            continue
+        
 async def get_messages(client,my_channel):
     offset_id = 0
     limit = 100
@@ -108,8 +117,30 @@ async def get_messages(client,my_channel):
             total_messages = len(all_messages)
             if total_count_limit != 0 and total_messages >= total_count_limit:
                 break
+    return all_messages
+
 
                                  
 async def store_messages(messages,filename = "telegram_messages.json"):
     async with aiofiles.open(filename,"w") as outfile:
         await json.dump(messages, outfile, cls = DateTimeEncoder)
+
+async def main(client):
+    
+    await client.start()
+    print("Client Created")
+
+    await authorize_client(client,PHONE_NUMBER_KEY)
+    me = await client.get_me()
+    
+    my_channel = await get_channel()
+
+    messages = await get_messages(client,my_channel)
+
+    await store_messages(messages)
+
+
+if __name__ == "__main__":
+    client = create_client()
+    with client:
+        client.loop.run_until_complete(main(client))
