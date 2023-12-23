@@ -1,0 +1,7 @@
+.DS_STORE
+
+.vscode
+venv
+config.ini
+*.json
+*.ipynb
