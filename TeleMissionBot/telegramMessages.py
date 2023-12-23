@@ -64,29 +64,40 @@ async def authorize_client(client, phone_number):
             await client.sign_in(password=input("Enter password: "))
 
 
-def get_channel_info():
-    user_channel = input("Enter Telegram channel URL or ID: ").strip()
+async def get_channel_info():
+    user_channel = input("Enter Telegram channel URL or ID: ")
+
+    
+    if "t.me" in user_channel:
+        entity = user_channel.split("/")[-1]
+    else:
+        entity = user_channel
 
     try:
-        if user_channel.isdigit():
-            entity = PeerChannel(int(user_channel))
-        else:
-            entity = user_channel
+        if entity.isdigit():
+            entity = PeerChannel(int(entity))
+        print("I am here")
     except ValueError:
-        print("Invalid input. Please enter a valid Telegram channel URL or ID")
+        print("Invalid channel information. Please enter a valid channel URL or ID.")
         return None
     
     return entity
+
     
 
 async def get_channel():
     while True:
         try:
-            entity = get_channel_info()
+            entity = await get_channel_info()
+            print("now here")
+            print(type(entity))
             my_channel = await client.get_entity(entity)
+            print("arrived here")
             return my_channel
         except ValueError:
+            print("ValueError")
             continue
+
 
 async def fetch_messages(client, my_channel, offset_id, limit):
     return await client(GetHistoryRequest(
@@ -100,23 +111,25 @@ async def fetch_messages(client, my_channel, offset_id, limit):
         hash=0,
     ))
 
+
 async def process_messages(messages, total_messages, total_count_limit, all_messages):
     if not messages:
         return False
 
     for message in messages:
         all_messages.append(message.to_dict())
-        offset_id = messages[-1].id
-        total_messages = len(all_messages)
+        total_messages += 1
+        offset_id = message.id
 
         if total_count_limit != 0 and total_messages >= total_count_limit:
             return False
 
     return True
 
+
 async def get_messages(client, my_channel):
     offset_id = 0
-    limit = 100
+    limit = 10
     all_messages = []
     total_messages = 0
     total_count_limit = 0
@@ -125,28 +138,37 @@ async def get_messages(client, my_channel):
         print(f"Current Offset ID is: {offset_id}; Total Messages: {total_messages}")
 
         history = await fetch_messages(client, my_channel, offset_id, limit)
-        if not await process_messages(history.messages, total_messages, total_count_limit, all_messages):
+        messages = history.messages
+
+        if not messages:
+            break  
+
+        if not await process_messages(messages, total_messages, total_count_limit, all_messages):
             break
 
-    return all_messages
+        offset_id = messages[-1].id
+        total_messages += len(messages)
 
+    return all_messages
                                
-async def store_messages(messages,filename = "telegram_messages.json"):
-    async with aiofiles.open(filename,"w") as outfile:
-        await json.dump(messages, outfile, cls = DateTimeEncoder)
+async def store_messages(messages, filename="telegram_messages.json"):
+    if messages is not None:
+        async with aiofiles.open(filename, "w") as outfile:
+            await outfile.write(json.dumps(messages, cls=DateTimeEncoder))
+    else:
+        print("No messages to store.")
+
 
 async def main(client):
     
     await client.start()
+
     print("Client Created")
 
     await authorize_client(client,PHONE_NUMBER_KEY)
     me = await client.get_me()
-    
     my_channel = await get_channel()
-
     messages = await get_messages(client,my_channel)
-
     await store_messages(messages)
 
 
