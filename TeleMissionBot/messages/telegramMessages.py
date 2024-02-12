@@ -15,9 +15,10 @@ API_ID_KEY = "api_id"
 API_HASH_KEY = "api_hash"
 PHONE_NUMBER_KEY = "phone_number"
 USER_NAME_KEY = "username"
-CONFIG_FILE = "config.ini"
+CONFIG_FILE = "..config/config.ini"
 
 class DateTimeEncoder(json.JSONEncoder):
+    """Class encode datetime"""
     def default(self, o):
         if isinstance(o, datetime):
             return o.isoformat()
@@ -28,24 +29,28 @@ class DateTimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self,o)
 
 def config_file():
+    """Reads the config file"""
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
     return config
 
 
 def configure_api(config):
+    """Gets the API id and hashkey"""
     api_id = config[CONFIG_SECTION][API_ID_KEY]
     api_hash = str(config[CONFIG_SECTION][API_HASH_KEY])
     return (api_id,api_hash)
 
 
 def configure_user(config):
+    """Gets the phone number and username"""
     phone_number = config[CONFIG_SECTION][PHONE_NUMBER_KEY]
     username = config[CONFIG_SECTION][USER_NAME_KEY]
     return (phone_number,username)
 
 
 def create_client():
+    """creates a telegram client"""
     config = config_file()
     api_id,api_hash = configure_api(config)
     username = configure_user(config)[1]
@@ -55,6 +60,7 @@ def create_client():
 
 
 async def authorize_client(client, phone_number):
+    """authorizes user (signs in to telegram)"""
     if await client.is_user_authorized() == False:
         await client.send_code_request(phone_number)
         print("A verification code has been sent to your cellphone number.")
@@ -65,6 +71,7 @@ async def authorize_client(client, phone_number):
 
 
 async def get_channel_info():
+    """Gets the channel information and checks if it is valid."""
     user_channel = input("Enter Telegram channel URL or ID: ")
 
     
@@ -86,20 +93,19 @@ async def get_channel_info():
     
 
 async def get_channel():
+    """Gets the channel"""
     while True:
         try:
             entity = await get_channel_info()
-            print("now here")
             print(type(entity))
             my_channel = await client.get_entity(entity)
-            print("arrived here")
             return my_channel
         except ValueError:
-            print("ValueError")
             continue
 
 
 async def fetch_messages(client, my_channel, offset_id, limit):
+    """Fetches the messages"""
     return await client(GetHistoryRequest(
         peer=my_channel,
         offset_id=offset_id,
@@ -113,6 +119,7 @@ async def fetch_messages(client, my_channel, offset_id, limit):
 
 
 async def process_messages(messages, total_messages, total_count_limit, all_messages):
+    """Processes the messages from the telegram group"""
     if not messages:
         return False
 
@@ -128,6 +135,7 @@ async def process_messages(messages, total_messages, total_count_limit, all_mess
 
 
 async def get_messages(client, my_channel):
+    """Gets the messages"""
     offset_id = 0
     limit = 10
     all_messages = []
@@ -152,6 +160,7 @@ async def get_messages(client, my_channel):
     return all_messages
                                
 async def store_messages(messages, filename="telegram_messages.json"):
+    """Stores the messages"""
     if messages is not None:
         async with aiofiles.open(filename, "w") as outfile:
             await outfile.write(json.dumps(messages, cls=DateTimeEncoder))
