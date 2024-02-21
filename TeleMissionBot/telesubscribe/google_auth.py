@@ -8,8 +8,8 @@ SCOPES = [
     'https://www.googleapis.com/auth/youtube.force-ssl',
 ]
 
-TOKEN_PATH = 'token.json'
-CLIENT_SECRET_PATH = 'credentials.json'
+TOKEN_PATH = 'config/token.json'
+CLIENT_SECRET_PATH = 'config/credentials.json'
 
 def authenticate_user(client_secret_path, token_path):
     """
