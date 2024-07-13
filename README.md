@@ -1,2 +1,2 @@
 # TeleMissionBot
-A bot to actively work on daily missions issued from a telegram group.
+A bot to automate my daily missions issued from a telegram group.
